@@ -557,14 +557,6 @@ function downloadCertPDF() {
   const { name } = window._certData;
   const certEl = document.querySelector('#certificate .cert-outer');
 
-  // Force fixed A4 landscape dimensions before capture so mobile viewports do not distort the output
-  const prevWidth = certEl.style.width;
-  const prevHeight = certEl.style.height;
-  const prevPosition = certEl.style.position;
-  certEl.style.width = '1122px';
-  certEl.style.height = '794px';
-  certEl.style.position = 'absolute';
-
   html2canvas(certEl, {
     scale: 2,
     useCORS: true,
@@ -573,19 +565,23 @@ function downloadCertPDF() {
     logging: false,
     width: 1122,
     height: 794,
-    windowWidth: 1122,
-    windowHeight: 794
+    scrollX: 0,
+    scrollY: 0,
+    onclone: function(clonedDoc) {
+      const el = clonedDoc.querySelector('#certificate .cert-outer');
+      el.style.width = '1122px';
+      el.style.height = '794px';
+      el.style.overflow = 'hidden';
+      el.style.position = 'relative';
+      el.style.transform = 'none';
+    }
   }).then(function(canvas) {
-    certEl.style.width = prevWidth;
-    certEl.style.height = prevHeight;
-    certEl.style.position = prevPosition;
-
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
     const W = 297, H = 210;
     const imgData = canvas.toDataURL('image/png');
     doc.addImage(imgData, 'PNG', 0, 0, W, H);
-    doc.save(`TealProducts_SCP_Certificate_${name.replace(/\\s+/g,'_')}.pdf`);
+    doc.save(`TealProducts_SCP_Certificate_${name.replace(/\s+/g,'_')}.pdf`);
   });
 }
 
