@@ -756,7 +756,7 @@ function openLinkedInShare() {
   var data = window._certData;
   if (!data) { alert('Please generate your certificate first.'); return; }
 
-  var postText = "I'm delighted to share that I have successfully completed the Teal Products Smoke Control Panel (SCP) training programme!\n\nA huge thank you to the team at Teal Products for delivering such a comprehensive and professional training experience.\n\n#TealProducts #SmokePrevention #FireSafety #SmokeControl #Training #CPD";
+  var postText = "I'm delighted to share that I have successfully completed the Teal Products Smoke Control Panel (SCP) training course!\n\nA huge thank you to the team at Teal Products for delivering such a comprehensive and professional training experience.\n\n#SmokeVentilation #FireSafety #SmokeControl #SmokeVentilation #Training";
   var linkedInUrl = 'https://www.linkedin.com/feed/?shareActive=true&text=' + encodeURIComponent(postText);
   var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -797,15 +797,19 @@ function openLinkedInShare() {
 
     if (isMobile) {
       var saveNote = isIOS
-        ? 'Tap the button below to save the certificate image to your device, then copy the post text and open LinkedIn to attach it.'
-        : 'Tap the button below to save the certificate image, then copy the post text and open LinkedIn to attach it.';
+        ? 'Tap the button below to save your certificate image directly to Photos, then copy the post text and open LinkedIn to attach it.'
+        : 'Tap the button below to save the certificate image to Downloads, then copy the post text and open LinkedIn to attach it.';
+
+      var dlBtn = isIOS
+        ? '<button class="li-dl-btn" onclick="saveToPhotos()">' + dlSVG + 'Save to Photos</button>'
+        : '<button class="li-dl-btn" onclick="reTriggerCertDownload()">' + dlSVG + 'Download Certificate Image</button>';
 
       note.innerHTML =
         '<svg class="linkedin-note-icon" viewBox="0 0 24 24" style="fill:var(--teal)"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>' +
         '<div class="linkedin-note-body">' +
           '<strong>Your certificate is ready!</strong>' +
           '<p>' + saveNote + '</p>' +
-          '<button class="li-dl-btn" onclick="reTriggerCertDownload()">' + dlSVG + 'Download Certificate Image</button>' +
+          dlBtn +
           '<p class="li-section-label">Your post text</p>' +
           '<div class="li-post-preview" id="li-post-preview"></div>' +
           '<div class="li-copy-row">' +
@@ -834,6 +838,20 @@ function openLinkedInShare() {
 function reTriggerCertDownload() {
   var blob = window._certImageBlob;
   if (blob) { triggerBlobDownload(blob, certFileName()); }
+}
+
+function saveToPhotos() {
+  var blob = window._certImageBlob;
+  if (!blob) { alert('Certificate image not ready. Please try again.'); return; }
+  var fname = certFileName();
+  var file = new File([blob], fname, { type: 'image/png' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({ files: [file] }).catch(function(err) {
+      if (err.name !== 'AbortError') { triggerBlobDownload(blob, fname); }
+    });
+  } else {
+    triggerBlobDownload(blob, fname);
+  }
 }
 
 function copyLinkedInPost(btn) {
