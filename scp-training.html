@@ -712,10 +712,13 @@ function openLinkedInShare() {
 
   const postText = "I'm delighted to share that I have successfully completed the Teal Products Smoke Control Panel (SCP) training programme!\n\nA huge thank you to the team at Teal Products for delivering such a comprehensive and professional training experience.\n\n#TealProducts #SmokePrevention #FireSafety #SmokeControl #Training #CPD";
 
+  // Open LinkedIn immediately — must be synchronous with the click event or browsers block it as a popup
+  window.open('https://www.linkedin.com/feed/?shareActive=true&text=' + encodeURIComponent(postText), '_blank', 'noopener');
+
   const btn = document.getElementById('btn-share-linkedin');
   const origHTML = btn.innerHTML;
   btn.disabled = true;
-  btn.innerHTML = '<svg class="btn-spin" viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor"><path d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8Z"/></svg> Preparing...';
+  btn.innerHTML = '<svg class="btn-spin" viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor"><path d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8Z"/></svg> Saving image...';
 
   captureCertBlob(function(blob) {
     btn.disabled = false;
@@ -724,7 +727,6 @@ function openLinkedInShare() {
     if (!blob) { alert('Could not generate certificate image. Please try again.'); return; }
 
     triggerBlobDownload(blob, certFileName());
-    window.open('https://www.linkedin.com/feed/?shareActive=true&text=' + encodeURIComponent(postText), '_blank', 'noopener');
 
     var note = document.getElementById('linkedin-note');
     if (note) {
