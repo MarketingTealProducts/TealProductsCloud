@@ -315,6 +315,22 @@
     box-shadow: 0 3px 10px rgba(10,102,194,0.30);
   }
   .linkedin-open-link svg { width: 15px; height: 15px; fill: white; }
+  .li-post-preview {
+    margin-top: 10px; padding: 10px 12px;
+    background: white; border: 1px solid var(--grey-mid); border-radius: 6px;
+    font-size: 12px; color: var(--text); white-space: pre-wrap; line-height: 1.5;
+    max-height: 90px; overflow-y: auto;
+  }
+  .li-copy-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+  .li-copy-btn {
+    display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+    padding: 8px 14px;
+    background: white; border: 1.5px solid var(--teal); color: var(--teal);
+    border-radius: 5px; font-family: 'Montserrat', sans-serif;
+    font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .li-copy-btn svg { width: 13px; height: 13px; fill: var(--teal); }
+  .li-copied { display: none; font-size: 12px; font-weight: 700; color: var(--success); }
 </style>
 </head>
 <body>
@@ -735,7 +751,7 @@ function openLinkedInShare() {
   // Desktop: open LinkedIn now while still in synchronous click context
   if (!isMobile) { window.open(linkedInUrl, '_blank', 'noopener'); }
 
-  // Show generating state immediately so the user knows something is happening
+  // Show generating card immediately
   var note = document.getElementById('linkedin-note');
   if (note) {
     note.innerHTML = '<svg class="linkedin-note-icon btn-spin" viewBox="0 0 24 24" style="fill:var(--teal)"><path d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8Z"/></svg>' +
@@ -759,28 +775,63 @@ function openLinkedInShare() {
     }
 
     triggerBlobDownload(blob, certFileName());
+    window._liPostText = postText;
 
-    var saveMsg, btnLabel;
-    if (isIOS) {
-      saveMsg = 'Your certificate image is downloading — tap the download icon in your browser bar or check your Files app, then come back and tap the button below.';
-      btnLabel = 'Tap to Open LinkedIn Post';
-    } else if (isMobile) {
-      saveMsg = 'Certificate image saved to your Downloads. Tap the button below to open LinkedIn and attach it to the pre-filled post.';
-      btnLabel = 'Tap to Open LinkedIn Post';
-    } else {
-      saveMsg = 'Image saved to your Downloads folder. LinkedIn is already open in a new tab — attach the image to complete your post.';
-      btnLabel = 'Open LinkedIn Post';
-    }
+    if (!note) { return; }
 
-    if (note) {
-      note.innerHTML = '<svg class="linkedin-note-icon" viewBox="0 0 24 24" style="fill:var(--teal)"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>' +
+    if (isMobile) {
+      var saveMsg = isIOS
+        ? 'Image downloading — check your browser download bar or Files app.'
+        : 'Image saved to your Downloads.';
+
+      note.innerHTML =
+        '<svg class="linkedin-note-icon" viewBox="0 0 24 24" style="fill:var(--teal)"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>' +
         '<div class="linkedin-note-body">' +
           '<strong>Certificate image saved!</strong>' +
-          '<p>' + saveMsg + '</p>' +
-          '<a class="linkedin-open-link" href="' + linkedInUrl + '" target="_blank" rel="noopener">' + _liSVG + btnLabel + '</a>' +
+          '<p>' + saveMsg + ' Copy the post text below, open LinkedIn and paste it, then attach your certificate image.</p>' +
+          '<div class="li-post-preview" id="li-post-preview"></div>' +
+          '<div class="li-copy-row">' +
+            '<button class="li-copy-btn" onclick="copyLinkedInPost(this)">' +
+              '<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>' +
+              'Copy Post Text' +
+            '</button>' +
+            '<span class="li-copied" id="li-copied">✓ Copied!</span>' +
+          '</div>' +
+          '<a class="linkedin-open-link" href="' + linkedInUrl + '" target="_blank" rel="noopener">' + _liSVG + 'Open LinkedIn Post</a>' +
+        '</div>';
+
+      var preview = document.getElementById('li-post-preview');
+      if (preview) { preview.textContent = postText; }
+
+    } else {
+      note.innerHTML =
+        '<svg class="linkedin-note-icon" viewBox="0 0 24 24" style="fill:var(--teal)"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>' +
+        '<div class="linkedin-note-body">' +
+          '<strong>Certificate image saved!</strong>' +
+          '<p>Image saved to your Downloads folder. LinkedIn is already open in a new tab — attach the image to complete your post.</p>' +
+          '<a class="linkedin-open-link" href="' + linkedInUrl + '" target="_blank" rel="noopener">' + _liSVG + 'Open LinkedIn Post</a>' +
         '</div>';
     }
   });
+}
+
+function copyLinkedInPost(btn) {
+  var text = window._liPostText || '';
+  function onCopied() {
+    var badge = document.getElementById('li-copied');
+    if (badge) { badge.style.display = 'inline'; setTimeout(function() { badge.style.display = 'none'; }, 2200); }
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(onCopied).catch(function() {
+      var ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+      onCopied();
+    });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    onCopied();
+  }
 }
 
 </script>
