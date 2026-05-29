@@ -551,6 +551,56 @@
 
   .hidden { display: none !important; }
   .text-center { text-align: center; }
+
+  /* ── LINKEDIN ── */
+  .btn-linkedin { background: #0A66C2; color: white; box-shadow: 0 4px 14px rgba(10,102,194,0.30); }
+  .btn-linkedin:hover { background: #004182; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(10,102,194,0.4); }
+  .btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none !important; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .btn-spin { animation: spin 0.75s linear infinite; }
+  .linkedin-note {
+    display: none; margin-top: 16px;
+    padding: 16px 18px;
+    background: #daf3ef; border: 1.5px solid #49C5B1;
+    border-radius: 8px; gap: 12px; align-items: flex-start;
+  }
+  .linkedin-note.visible { display: flex; }
+  .linkedin-note-icon { flex-shrink: 0; width: 22px; height: 22px; fill: #49C5B1; margin-top: 1px; }
+  .linkedin-note-body { font-size: 13px; font-weight: 500; color: #1F2A44; line-height: 1.6; flex: 1; }
+  .linkedin-note-body strong { display: block; font-size: 14px; margin-bottom: 5px; }
+  .linkedin-note-body p { margin: 0; font-weight: 400; color: #6b7e7c; font-size: 12.5px; }
+  .li-dl-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-top: 12px; padding: 11px 20px;
+    background: #49C5B1; color: white; border: none; border-radius: 6px;
+    font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 700;
+    cursor: pointer; box-shadow: 0 3px 10px rgba(73,197,177,0.30);
+    width: 100%; justify-content: center;
+  }
+  .li-dl-btn svg { width: 15px; height: 15px; fill: white; }
+  .li-section-label { margin: 14px 0 5px; font-size: 11px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; color: #1F2A44; }
+  .li-post-preview {
+    margin-top: 10px; padding: 10px 12px;
+    background: white; border: 1px solid #c8d4d2; border-radius: 6px;
+    font-size: 12px; color: #1a2b29; white-space: pre-wrap; line-height: 1.5;
+    max-height: 90px; overflow-y: auto;
+  }
+  .li-copy-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+  .li-copy-btn {
+    display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+    padding: 8px 14px; background: white; border: 1.5px solid #49C5B1; color: #49C5B1;
+    border-radius: 5px; font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .li-copy-btn svg { width: 13px; height: 13px; fill: #49C5B1; }
+  .li-copied { display: none; font-size: 12px; font-weight: 700; color: #3ab572; }
+  .linkedin-open-link {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-top: 14px; padding: 12px 22px;
+    background: #0A66C2; color: white; border-radius: 6px;
+    font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 700; text-decoration: none;
+    box-shadow: 0 3px 10px rgba(10,102,194,0.30);
+  }
+  .linkedin-open-link svg { width: 15px; height: 15px; fill: white; }
 </style>
 </head>
 <body>
@@ -819,7 +869,12 @@
               <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
               Download Certificate PDF
             </button>
+            <button id="btn-share-linkedin" class="btn btn-linkedin" onclick="openLinkedInShare()">
+              <svg viewBox="0 0 24 24"><path d="M19 3A2 2 0 0 1 21 5V19A2 2 0 0 1 19 21H5A2 2 0 0 1 3 19V5A2 2 0 0 1 5 3H19M18.5 18.5V13.2A3.26 3.26 0 0 0 15.24 9.94C14.39 9.94 13.4 10.46 12.92 11.24V10.13H10.13V18.5H12.92V13.57A1.32 1.32 0 0 1 14.24 12.25C14.94 12.25 15.5 12.81 15.5 13.57V18.5H18.5M6.88 8.56A1.68 1.68 0 0 0 8.56 6.88C8.56 5.95 7.81 5.19 6.88 5.19A1.69 1.69 0 0 0 5.19 6.88C5.19 7.81 5.95 8.56 6.88 8.56M8.27 18.5V10.13H5.5V18.5H8.27Z"/></svg>
+              Share on LinkedIn
+            </button>
           </div>
+          <div class="linkedin-note" id="linkedin-note"></div>
         </div>
       </div>
     </div>
@@ -1000,6 +1055,31 @@ function revealResults() {
   }
   if(!valid) return;
 
+  fetch('https://hooks.zapier.com/hooks/catch/14481139/4ohb4pr/', {
+    method: 'POST',
+    body: JSON.stringify({ first_name: firstname, last_name: lastname, company: company, email: email, job_title: jobtitle, industry: industry })
+  }).catch(()=>{});
+
+  if (document.getElementById('d-subscribe').checked) {
+    const mc_iframe = document.getElementById('mc-hidden-iframe') || (() => {
+      const f = document.createElement('iframe');
+      f.id = 'mc-hidden-iframe'; f.name = 'mc-hidden-iframe';
+      f.style.cssText = 'display:none;position:absolute;width:0;height:0;border:0;';
+      document.body.appendChild(f); return f;
+    })();
+    const mc_form = document.createElement('form');
+    mc_form.action = 'https://us14.list-manage.com/subscribe/post?u=d48ac3158f6ebfb864ab5372f&id=1ec211b495';
+    mc_form.method = 'POST'; mc_form.target = 'mc-hidden-iframe';
+    mc_form.style.display = 'none';
+    [['EMAIL', email], ['FNAME', firstname], ['LNAME', lastname]].forEach(([n, v]) => {
+      const i = document.createElement('input'); i.type = 'hidden'; i.name = n; i.value = v;
+      mc_form.appendChild(i);
+    });
+    document.body.appendChild(mc_form);
+    mc_form.submit();
+    mc_form.remove();
+  }
+
   const name = `${firstname} ${lastname}`;
   const date = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
 
@@ -1176,6 +1256,142 @@ function downloadCertPDF() {
     });
   }, 100);
 
+}
+
+/* ── LinkedIn Share ── */
+var _liSVG = '<svg viewBox="0 0 24 24"><path d="M19 3A2 2 0 0 1 21 5V19A2 2 0 0 1 19 21H5A2 2 0 0 1 3 19V5A2 2 0 0 1 5 3H19M18.5 18.5V13.2A3.26 3.26 0 0 0 15.24 9.94C14.39 9.94 13.4 10.46 12.92 11.24V10.13H10.13V18.5H12.92V13.57A1.32 1.32 0 0 1 14.24 12.25C14.94 12.25 15.5 12.81 15.5 13.57V18.5H18.5M6.88 8.56A1.68 1.68 0 0 0 8.56 6.88C8.56 5.95 7.81 5.19 6.88 5.19A1.69 1.69 0 0 0 5.19 6.88C5.19 7.81 5.95 8.56 6.88 8.56M8.27 18.5V10.13H5.5V18.5H8.27Z"/></svg>';
+
+function captureCertBlob(callback) {
+  var certEl = document.querySelector('.cert-outer');
+  if (!certEl) { callback(null); return; }
+  var origWidth = certEl.style.width;
+  certEl.style.width = '1050px';
+  setTimeout(function() {
+    html2canvas(certEl, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#49C5B1', logging: false, windowWidth: 1200 })
+      .then(function(canvas) {
+        certEl.style.width = origWidth;
+        canvas.toBlob(function(blob) { callback(blob); }, 'image/png');
+      })
+      .catch(function(err) {
+        certEl.style.width = origWidth;
+        console.error('Certificate capture failed:', err);
+        callback(null);
+      });
+  }, 150);
+}
+
+function certFileName() {
+  var firstname = document.getElementById('f-firstname') ? document.getElementById('f-firstname').value.trim() : '';
+  var lastname  = document.getElementById('f-lastname')  ? document.getElementById('f-lastname').value.trim()  : '';
+  return 'TealProducts_CPD_Certificate_' + (firstname + '_' + lastname).replace(/\s+/g, '_') + '.png';
+}
+
+function triggerBlobDownload(blob, fileName) {
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = fileName; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function reTriggerCertDownload() {
+  var blob = window._certImageBlob;
+  if (blob) { triggerBlobDownload(blob, certFileName()); }
+}
+
+function openLinkedInShare() {
+  var certEl = document.querySelector('.cert-outer');
+  if (!certEl) { alert('Please complete the quiz to generate your certificate first.'); return; }
+
+  var postText = "I'm delighted to share that I have successfully completed the Teal Products CPD: An Introduction to Smoke Ventilation\n\n#SmokePrevention #FireSafety #SmokeControl #Training #CPD";
+  var linkedInUrl = 'https://www.linkedin.com/feed/?shareActive=true&text=' + encodeURIComponent(postText);
+  var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  var isIOS    = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  if (!isMobile) { window.open(linkedInUrl, '_blank', 'noopener'); }
+
+  var note = document.getElementById('linkedin-note');
+  if (note) {
+    note.innerHTML = '<svg class="linkedin-note-icon btn-spin" viewBox="0 0 24 24" style="fill:#49C5B1"><path d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8Z"/></svg>' +
+      '<div class="linkedin-note-body"><strong>Generating your certificate image...</strong><p>This only takes a moment.</p></div>';
+    note.classList.add('visible');
+  }
+
+  var btn = document.getElementById('btn-share-linkedin');
+  var origHTML = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<svg class="btn-spin" viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor"><path d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8Z"/></svg> Generating...';
+
+  captureCertBlob(function(blob) {
+    btn.disabled = false;
+    btn.innerHTML = origHTML;
+
+    if (!blob) {
+      if (note) { note.classList.remove('visible'); }
+      alert('Could not generate certificate image. Please try again.');
+      return;
+    }
+
+    window._certImageBlob = blob;
+    window._liPostText = postText;
+
+    if (!note) { return; }
+
+    var dlSVG = '<svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>';
+    var cpSVG = '<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
+
+    if (isMobile) {
+      var saveNote = isIOS
+        ? 'Tap the button below to save the certificate image to your device, then copy the post text and open LinkedIn to attach it.'
+        : 'Tap the button below to save the certificate image, then copy the post text and open LinkedIn to attach it.';
+
+      note.innerHTML =
+        '<svg class="linkedin-note-icon" viewBox="0 0 24 24" style="fill:#49C5B1"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>' +
+        '<div class="linkedin-note-body">' +
+          '<strong>Your certificate is ready!</strong>' +
+          '<p>' + saveNote + '</p>' +
+          '<button class="li-dl-btn" onclick="reTriggerCertDownload()">' + dlSVG + 'Download Certificate Image</button>' +
+          '<p class="li-section-label">Your post text</p>' +
+          '<div class="li-post-preview" id="li-post-preview"></div>' +
+          '<div class="li-copy-row">' +
+            '<button class="li-copy-btn" onclick="copyLinkedInPost(this)">' + cpSVG + 'Copy Post Text</button>' +
+            '<span class="li-copied" id="li-copied">&#10003; Copied!</span>' +
+          '</div>' +
+          '<a class="linkedin-open-link" href="' + linkedInUrl + '" target="_blank" rel="noopener">' + _liSVG + 'Open LinkedIn Post</a>' +
+        '</div>';
+
+      var preview = document.getElementById('li-post-preview');
+      if (preview) { preview.textContent = postText; }
+
+    } else {
+      triggerBlobDownload(blob, certFileName());
+      note.innerHTML =
+        '<svg class="linkedin-note-icon" viewBox="0 0 24 24" style="fill:#49C5B1"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>' +
+        '<div class="linkedin-note-body">' +
+          '<strong>Certificate image saved!</strong>' +
+          '<p>Image saved to your Downloads folder. LinkedIn is already open in a new tab — attach the image to complete your post.</p>' +
+          '<a class="linkedin-open-link" href="' + linkedInUrl + '" target="_blank" rel="noopener">' + _liSVG + 'Open LinkedIn Post</a>' +
+        '</div>';
+    }
+  });
+}
+
+function copyLinkedInPost(btn) {
+  var text = window._liPostText || '';
+  function onCopied() {
+    var badge = document.getElementById('li-copied');
+    if (badge) { badge.style.display = 'inline'; setTimeout(function() { badge.style.display = 'none'; }, 2200); }
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(onCopied).catch(function() {
+      var ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+      onCopied();
+    });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    onCopied();
+  }
 }
 </script>
 <script>
