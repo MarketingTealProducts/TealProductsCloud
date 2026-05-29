@@ -315,6 +315,19 @@
     box-shadow: 0 3px 10px rgba(10,102,194,0.30);
   }
   .linkedin-open-link svg { width: 15px; height: 15px; fill: white; }
+  .li-dl-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-top: 12px; padding: 11px 20px;
+    background: var(--teal); color: white; border: none; border-radius: 6px;
+    font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 700;
+    cursor: pointer; box-shadow: 0 3px 10px rgba(73,197,177,0.30);
+    width: 100%;  justify-content: center;
+  }
+  .li-dl-btn svg { width: 15px; height: 15px; fill: white; }
+  .li-section-label {
+    margin: 14px 0 5px; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.7px; text-transform: uppercase; color: var(--blue);
+  }
   .li-post-preview {
     margin-top: 10px; padding: 10px 12px;
     background: white; border: 1px solid var(--grey-mid); border-radius: 6px;
@@ -748,10 +761,10 @@ function openLinkedInShare() {
   var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-  // Open LinkedIn now — must be synchronous with the click event on all platforms
-  window.open(linkedInUrl, '_blank', 'noopener');
+  // Desktop only: open LinkedIn synchronously while still in the click-event context
+  if (!isMobile) { window.open(linkedInUrl, '_blank', 'noopener'); }
 
-  // Show generating card immediately
+  // Show generating card immediately so the user knows something is happening
   var note = document.getElementById('linkedin-note');
   if (note) {
     note.innerHTML = '<svg class="linkedin-note-icon btn-spin" viewBox="0 0 24 24" style="fill:var(--teal)"><path d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8Z"/></svg>' +
@@ -774,28 +787,30 @@ function openLinkedInShare() {
       return;
     }
 
-    triggerBlobDownload(blob, certFileName());
+    window._certImageBlob = blob;
     window._liPostText = postText;
 
     if (!note) { return; }
 
+    var dlSVG = '<svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>';
+    var cpSVG = '<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
+
     if (isMobile) {
-      var saveMsg = isIOS
-        ? 'Image downloading — check your browser download bar or Files app.'
-        : 'Image saved to your Downloads.';
+      var saveNote = isIOS
+        ? 'Tap the button below to save the certificate image to your device, then copy the post text and open LinkedIn to attach it.'
+        : 'Tap the button below to save the certificate image, then copy the post text and open LinkedIn to attach it.';
 
       note.innerHTML =
         '<svg class="linkedin-note-icon" viewBox="0 0 24 24" style="fill:var(--teal)"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>' +
         '<div class="linkedin-note-body">' +
-          '<strong>Certificate image saved!</strong>' +
-          '<p>' + saveMsg + ' Copy the post text below, open LinkedIn and paste it, then attach your certificate image.</p>' +
+          '<strong>Your certificate is ready!</strong>' +
+          '<p>' + saveNote + '</p>' +
+          '<button class="li-dl-btn" onclick="reTriggerCertDownload()">' + dlSVG + 'Download Certificate Image</button>' +
+          '<p class="li-section-label">Your post text</p>' +
           '<div class="li-post-preview" id="li-post-preview"></div>' +
           '<div class="li-copy-row">' +
-            '<button class="li-copy-btn" onclick="copyLinkedInPost(this)">' +
-              '<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>' +
-              'Copy Post Text' +
-            '</button>' +
-            '<span class="li-copied" id="li-copied">✓ Copied!</span>' +
+            '<button class="li-copy-btn" onclick="copyLinkedInPost(this)">' + cpSVG + 'Copy Post Text</button>' +
+            '<span class="li-copied" id="li-copied">&#10003; Copied!</span>' +
           '</div>' +
           '<a class="linkedin-open-link" href="' + linkedInUrl + '" target="_blank" rel="noopener">' + _liSVG + 'Open LinkedIn Post</a>' +
         '</div>';
@@ -804,6 +819,7 @@ function openLinkedInShare() {
       if (preview) { preview.textContent = postText; }
 
     } else {
+      triggerBlobDownload(blob, certFileName());
       note.innerHTML =
         '<svg class="linkedin-note-icon" viewBox="0 0 24 24" style="fill:var(--teal)"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>' +
         '<div class="linkedin-note-body">' +
@@ -813,6 +829,11 @@ function openLinkedInShare() {
         '</div>';
     }
   });
+}
+
+function reTriggerCertDownload() {
+  var blob = window._certImageBlob;
+  if (blob) { triggerBlobDownload(blob, certFileName()); }
 }
 
 function copyLinkedInPost(btn) {
