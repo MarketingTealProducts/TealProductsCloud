@@ -765,43 +765,43 @@ function downloadCertPDF() {
 
 /* ── Shared certificate PNG capture ── */
 function captureCertBlob(callback) {
-  const certEl = document.querySelector(‘#certificate .cert-outer’);
+  const certEl = document.querySelector('#certificate .cert-outer');
   if (!certEl) { callback(null); return; }
 
   const A4_W = 860;
   const A4_H = Math.round(A4_W * 210 / 297);
 
-  const container = document.createElement(‘div’);
-  container.style.cssText = ‘position:fixed;top:0;left:-2000px;width:’ + A4_W + ‘px;z-index:-1;’;
+  const container = document.createElement('div');
+  container.style.cssText = 'position:fixed;top:0;left:-2000px;width:' + A4_W + 'px;z-index:-1;';
   const clone = certEl.cloneNode(true);
-  clone.style.cssText += ‘;width:’ + A4_W + ‘px;-webkit-text-size-adjust:100%;text-size-adjust:100%;’;
-  var ci = clone.querySelector(‘.cert-inner’);
-  if (ci) ci.style.padding = ‘48px 52px 40px’;
-  var cn = clone.querySelector(‘.cert-name-line’);
-  if (cn) cn.style.fontSize = ‘26px’;
-  var cc = clone.querySelector(‘.cert-course’);
-  if (cc) cc.style.fontSize = ‘20px’;
-  clone.querySelectorAll(‘.cert-course-list li’).forEach(function(el) { el.style.fontSize = ‘17px’; });
-  var cf = clone.querySelector(‘.cert-footer’);
-  if (cf) { cf.style.flexDirection=’row’; cf.style.alignItems=’flex-end’; cf.style.justifyContent=’space-between’; }
+  clone.style.cssText += ';width:' + A4_W + 'px;-webkit-text-size-adjust:100%;text-size-adjust:100%;';
+  var ci = clone.querySelector('.cert-inner');
+  if (ci) ci.style.padding = '48px 52px 40px';
+  var cn = clone.querySelector('.cert-name-line');
+  if (cn) cn.style.fontSize = '26px';
+  var cc = clone.querySelector('.cert-course');
+  if (cc) cc.style.fontSize = '20px';
+  clone.querySelectorAll('.cert-course-list li').forEach(function(el) { el.style.fontSize = '17px'; });
+  var cf = clone.querySelector('.cert-footer');
+  if (cf) { cf.style.flexDirection='row'; cf.style.alignItems='flex-end'; cf.style.justifyContent='space-between'; }
   container.appendChild(clone);
   document.body.appendChild(container);
 
   setTimeout(function() {
     var naturalH = clone.getBoundingClientRect().height;
     if (naturalH < A4_H) {
-      var spacer = clone.querySelector(‘.cert-spacer’);
-      if (spacer) { var h = spacer.getBoundingClientRect().height || 48; spacer.style.height = (h + (A4_H - naturalH)) + ‘px’; }
+      var spacer = clone.querySelector('.cert-spacer');
+      if (spacer) { var h = spacer.getBoundingClientRect().height || 48; spacer.style.height = (h + (A4_H - naturalH)) + 'px'; }
     }
     setTimeout(function() {
-      html2canvas(clone, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: ‘#49C5B1’, logging: false, windowWidth: 1200 })
+      html2canvas(clone, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#49C5B1', logging: false, windowWidth: 1200 })
         .then(function(canvas) {
           document.body.removeChild(container);
-          canvas.toBlob(function(blob) { callback(blob); }, ‘image/png’);
+          canvas.toBlob(function(blob) { callback(blob); }, 'image/png');
         })
         .catch(function(err) {
           document.body.removeChild(container);
-          console.error(‘Certificate capture failed:’, err);
+          console.error('Certificate capture failed:', err);
           callback(null);
         });
     }, 150);
@@ -809,12 +809,12 @@ function captureCertBlob(callback) {
 }
 
 function certFileName() {
-  return ‘TealProducts_SCP_Certificate_’ + (window._certData ? window._certData.name.replace(/\s+/g, ‘_’) : ‘Certificate’) + ‘.png’;
+  return 'TealProducts_SCP_Certificate_' + (window._certData ? window._certData.name.replace(/\s+/g, '_') : 'Certificate') + '.png';
 }
 
 function triggerBlobDownload(blob, fileName) {
   const url = URL.createObjectURL(blob);
-  const a = document.createElement(‘a’);
+  const a = document.createElement('a');
   a.href = url; a.download = fileName; a.click();
   URL.revokeObjectURL(url);
 }
@@ -822,34 +822,34 @@ function triggerBlobDownload(blob, fileName) {
 /* ── Share on LinkedIn ── */
 function openLinkedInShare() {
   const data = window._certData;
-  if (!data) { alert(‘Please generate your certificate first.’); return; }
+  if (!data) { alert('Please generate your certificate first.'); return; }
 
   const postText = [
-    ‘I’m delighted to share that I have successfully completed the Teal Products Smoke Control Panel (SCP) training programme!’,
-    ‘’,
-    ‘A huge thank you to the team at Teal Products for delivering such a comprehensive and professional training experience.’,
-    ‘’,
-    ‘#TealProducts #SmokePrevention #FireSafety #SmokeControl #Training #CPD’
-  ].join(‘\n’);
+    'I\'m delighted to share that I have successfully completed the Teal Products Smoke Control Panel (SCP) training programme!',
+    '',
+    'A huge thank you to the team at Teal Products for delivering such a comprehensive and professional training experience.',
+    '',
+    '#TealProducts #SmokePrevention #FireSafety #SmokeControl #Training #CPD'
+  ].join('\n');
 
-  const btn = document.getElementById(‘btn-share-linkedin’);
+  const btn = document.getElementById('btn-share-linkedin');
   const origHTML = btn.innerHTML;
   btn.disabled = true;
-  btn.innerHTML = ‘<svg class="btn-spin" viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor"><path d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8Z"/></svg> Preparing…’;
+  btn.innerHTML = '<svg class="btn-spin" viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor"><path d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8Z"/></svg> Preparing…';
 
   captureCertBlob(function(blob) {
     btn.disabled = false;
     btn.innerHTML = origHTML;
 
-    if (!blob) { alert(‘Could not generate certificate image. Please try again.’); return; }
+    if (!blob) { alert('Could not generate certificate image. Please try again.'); return; }
     window._certImageBlob = blob;
 
-    const file = new File([blob], certFileName(), { type: ‘image/png’ });
+    const file = new File([blob], certFileName(), { type: 'image/png' });
 
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       navigator.share({ files: [file], text: postText })
         .catch(function(err) {
-          if (err.name !== ‘AbortError’) { showLinkedInModal(postText); }
+          if (err.name !== 'AbortError') { showLinkedInModal(postText); }
         });
     } else {
       showLinkedInModal(postText);
@@ -858,36 +858,36 @@ function openLinkedInShare() {
 }
 
 function showLinkedInModal(postText) {
-  document.getElementById(‘linkedin-post-text’).value = postText;
-  document.getElementById(‘linkedin-modal’).classList.add(‘open’);
+  document.getElementById('linkedin-post-text').value = postText;
+  document.getElementById('linkedin-modal').classList.add('open');
 }
 
 function closeLinkedInModal(e) {
-  if (e && e.target !== document.getElementById(‘linkedin-modal’)) return;
-  document.getElementById(‘linkedin-modal’).classList.remove(‘open’);
+  if (e && e.target !== document.getElementById('linkedin-modal')) return;
+  document.getElementById('linkedin-modal').classList.remove('open');
 }
 
 function copyPostText() {
-  const ta = document.getElementById(‘linkedin-post-text’);
+  const ta = document.getElementById('linkedin-post-text');
   navigator.clipboard.writeText(ta.value).then(function() {
-    const badge = document.getElementById(‘copy-confirm’);
-    badge.classList.add(‘visible’);
-    setTimeout(function() { badge.classList.remove(‘visible’); }, 2200);
-  }).catch(function() { ta.select(); document.execCommand(‘copy’); });
+    const badge = document.getElementById('copy-confirm');
+    badge.classList.add('visible');
+    setTimeout(function() { badge.classList.remove('visible'); }, 2200);
+  }).catch(function() { ta.select(); document.execCommand('copy'); });
 }
 
 function downloadCertImage() {
   if (window._certImageBlob) { triggerBlobDownload(window._certImageBlob, certFileName()); return; }
   captureCertBlob(function(blob) {
-    if (!blob) { alert(‘Could not save image. Please try again.’); return; }
+    if (!blob) { alert('Could not save image. Please try again.'); return; }
     window._certImageBlob = blob;
     triggerBlobDownload(blob, certFileName());
   });
 }
 
 function openLinkedInPost() {
-  const text = document.getElementById(‘linkedin-post-text’).value;
-  window.open(‘https://www.linkedin.com/feed/?shareActive=true&text=’ + encodeURIComponent(text), ‘_blank’, ‘noopener’);
+  const text = document.getElementById('linkedin-post-text').value;
+  window.open('https://www.linkedin.com/feed/?shareActive=true&text=' + encodeURIComponent(text), '_blank', 'noopener');
 }
 
 </script>
