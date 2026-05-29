@@ -748,8 +748,8 @@ function openLinkedInShare() {
   var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-  // Desktop: open LinkedIn now while still in synchronous click context
-  if (!isMobile) { window.open(linkedInUrl, '_blank', 'noopener'); }
+  // Open LinkedIn now — must be synchronous with the click event on all platforms
+  window.open(linkedInUrl, '_blank', 'noopener');
 
   // Show generating card immediately
   var note = document.getElementById('linkedin-note');
