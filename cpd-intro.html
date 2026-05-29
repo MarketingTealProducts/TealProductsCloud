@@ -1000,31 +1000,6 @@ function revealResults() {
   }
   if(!valid) return;
 
-  fetch('https://hooks.zapier.com/hooks/catch/14481139/4ohb4pr/', {
-    method: 'POST',
-    body: JSON.stringify({ first_name: firstname, last_name: lastname, company: company, email: email, job_title: jobtitle, industry: industry })
-  }).catch(()=>{});
-
-  if (document.getElementById('d-subscribe').checked) {
-    const mc_iframe = document.getElementById('mc-hidden-iframe') || (() => {
-      const f = document.createElement('iframe');
-      f.id = 'mc-hidden-iframe'; f.name = 'mc-hidden-iframe';
-      f.style.cssText = 'display:none;position:absolute;width:0;height:0;border:0;';
-      document.body.appendChild(f); return f;
-    })();
-    const mc_form = document.createElement('form');
-    mc_form.action = 'https://us14.list-manage.com/subscribe/post?u=d48ac3158f6ebfb864ab5372f&id=1ec211b495';
-    mc_form.method = 'POST'; mc_form.target = 'mc-hidden-iframe';
-    mc_form.style.display = 'none';
-    [['EMAIL', email], ['FNAME', firstname], ['LNAME', lastname]].forEach(([n, v]) => {
-      const i = document.createElement('input'); i.type = 'hidden'; i.name = n; i.value = v;
-      mc_form.appendChild(i);
-    });
-    document.body.appendChild(mc_form);
-    mc_form.submit();
-    mc_form.remove();
-  }
-
   const name = `${firstname} ${lastname}`;
   const date = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
 
