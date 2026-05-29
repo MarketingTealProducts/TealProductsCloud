@@ -761,8 +761,8 @@ function openLinkedInShare() {
   var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-  // Desktop only: open LinkedIn synchronously while still in the click-event context
-  if (!isMobile) { window.open(linkedInUrl, '_blank', 'noopener'); }
+  // Open LinkedIn synchronously while still in the click-event context (works on both desktop and mobile)
+  window.open(linkedInUrl, '_blank', 'noopener');
 
   // Show generating card immediately so the user knows something is happening
   var note = document.getElementById('linkedin-note');
@@ -796,12 +796,23 @@ function openLinkedInShare() {
     var cpSVG = '<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
 
     if (isMobile) {
+      // Auto-copy post text to clipboard so it's ready to paste if the LinkedIn app doesn't pre-fill it
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(postText).catch(function() {
+          var ta = document.createElement('textarea');
+          ta.value = postText; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+        });
+      } else {
+        var ta = document.createElement('textarea');
+        ta.value = postText; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+      }
+
       var saveNote = isIOS
-        ? 'Tap the button below to save your certificate image directly to Photos, then copy the post text and open LinkedIn to attach it.'
-        : 'Tap the button below to save the certificate image to Downloads, then copy the post text and open LinkedIn to attach it.';
+        ? 'LinkedIn is already opening! Your post text has been copied to your clipboard — paste it into your post if it wasn\'t pre-filled, then save and attach your certificate image.'
+        : 'LinkedIn is already opening! Your post text has been copied to your clipboard — paste it into your post if it wasn\'t pre-filled, then save and attach your certificate image.';
 
       var dlBtn = isIOS
-        ? '<button class="li-dl-btn" onclick="saveToPhotos()">' + dlSVG + 'Save to Photos</button>'
+        ? '<button class="li-dl-btn" onclick="saveToPhotos()">' + dlSVG + 'Save Certificate to Photos</button>'
         : '<button class="li-dl-btn" onclick="reTriggerCertDownload()">' + dlSVG + 'Download Certificate Image</button>';
 
       note.innerHTML =
@@ -810,13 +821,13 @@ function openLinkedInShare() {
           '<strong>Your certificate is ready!</strong>' +
           '<p>' + saveNote + '</p>' +
           dlBtn +
-          '<p class="li-section-label">Your post text</p>' +
+          '<p class="li-section-label">Your post text (already copied to clipboard)</p>' +
           '<div class="li-post-preview" id="li-post-preview"></div>' +
           '<div class="li-copy-row">' +
-            '<button class="li-copy-btn" onclick="copyLinkedInPost(this)">' + cpSVG + 'Copy Post Text</button>' +
+            '<button class="li-copy-btn" onclick="copyLinkedInPost(this)">' + cpSVG + 'Copy Again</button>' +
             '<span class="li-copied" id="li-copied">&#10003; Copied!</span>' +
           '</div>' +
-          '<a class="linkedin-open-link" href="' + linkedInUrl + '" target="_blank" rel="noopener">' + _liSVG + 'Open LinkedIn Post</a>' +
+          '<a class="linkedin-open-link" href="' + linkedInUrl + '" target="_blank" rel="noopener">' + _liSVG + 'Reopen LinkedIn</a>' +
         '</div>';
 
       var preview = document.getElementById('li-post-preview');
