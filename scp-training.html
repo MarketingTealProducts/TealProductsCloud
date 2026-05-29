@@ -291,6 +291,9 @@
   /* ── LINKEDIN BUTTON ── */
   .btn-linkedin { background: #0A66C2; color: white; box-shadow: 0 4px 14px rgba(10,102,194,0.30); }
   .btn-linkedin:hover { background: #004182; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(10,102,194,0.4); }
+  .btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none !important; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .btn-spin { animation: spin 0.75s linear infinite; }
 
   /* ── SHARE MODAL ── */
   .share-modal-overlay {
@@ -500,7 +503,7 @@
             <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
             Download Certificate PDF
           </button>
-          <button class="btn btn-linkedin" onclick="openLinkedInShare()">
+          <button id="btn-share-linkedin" class="btn btn-linkedin" onclick="openLinkedInShare()">
             <svg viewBox="0 0 24 24"><path d="M19 3A2 2 0 0 1 21 5V19A2 2 0 0 1 19 21H5A2 2 0 0 1 3 19V5A2 2 0 0 1 5 3H19M18.5 18.5V13.2A3.26 3.26 0 0 0 15.24 9.94C14.39 9.94 13.4 10.46 12.92 11.24V10.13H10.13V18.5H12.92V13.57A1.32 1.32 0 0 1 14.24 12.25C14.94 12.25 15.5 12.81 15.5 13.57V18.5H18.5M6.88 8.56A1.68 1.68 0 0 0 8.56 6.88C8.56 5.95 7.81 5.19 6.88 5.19A1.69 1.69 0 0 0 5.19 6.88C5.19 7.81 5.95 8.56 6.88 8.56M8.27 18.5V10.13H5.5V18.5H8.27Z"/></svg>
             Share on LinkedIn
           </button>
@@ -760,95 +763,131 @@ function downloadCertPDF() {
   }, 200);
 }
 
-function openLinkedInShare() {
-  const data = window._certData;
-  if (!data) { alert('Please generate your certificate first.'); return; }
-
-  const postText = [
-    'I’m delighted to share that I have successfully completed the Teal Products Smoke Control Panel (SCP) training programme!',
-    '',
-    'A huge thank you to the team at Teal Products for delivering such a comprehensive and professional training experience.',
-    '',
-    '#TealProducts #SmokePrevention #FireSafety #SmokeControl #Training #CPD'
-  ].join('\n');
-
-  document.getElementById('linkedin-post-text').value = postText;
-  document.getElementById('linkedin-modal').classList.add('open');
-  window._certImageBlob = null;
-}
-
-function closeLinkedInModal(e) {
-  if (e && e.target !== document.getElementById('linkedin-modal')) return;
-  document.getElementById('linkedin-modal').classList.remove('open');
-}
-
-function copyPostText() {
-  const ta = document.getElementById('linkedin-post-text');
-  navigator.clipboard.writeText(ta.value).then(function() {
-    const badge = document.getElementById('copy-confirm');
-    badge.classList.add('visible');
-    setTimeout(function() { badge.classList.remove('visible'); }, 2200);
-  }).catch(function() {
-    ta.select();
-    document.execCommand('copy');
-  });
-}
-
-function downloadCertImage() {
-  const certEl = document.querySelector('#certificate .cert-outer');
-  if (!certEl) { alert('Certificate not found.'); return; }
+/* ── Shared certificate PNG capture ── */
+function captureCertBlob(callback) {
+  const certEl = document.querySelector(‘#certificate .cert-outer’);
+  if (!certEl) { callback(null); return; }
 
   const A4_W = 860;
   const A4_H = Math.round(A4_W * 210 / 297);
 
-  const container = document.createElement('div');
-  container.style.cssText = 'position:fixed;top:0;left:-2000px;width:' + A4_W + 'px;z-index:-1;';
+  const container = document.createElement(‘div’);
+  container.style.cssText = ‘position:fixed;top:0;left:-2000px;width:’ + A4_W + ‘px;z-index:-1;’;
   const clone = certEl.cloneNode(true);
-  clone.style.width = A4_W + 'px';
-  clone.style.webkitTextSizeAdjust = '100%';
-  clone.style.textSizeAdjust = '100%';
-  var ci = clone.querySelector('.cert-inner');
-  if (ci) ci.style.padding = '48px 52px 40px';
-  var cn = clone.querySelector('.cert-name-line');
-  if (cn) cn.style.fontSize = '26px';
-  var cc = clone.querySelector('.cert-course');
-  if (cc) cc.style.fontSize = '20px';
-  clone.querySelectorAll('.cert-course-list li').forEach(function(el) { el.style.fontSize = '17px'; });
-  var cf = clone.querySelector('.cert-footer');
-  if (cf) { cf.style.flexDirection='row'; cf.style.alignItems='flex-end'; cf.style.justifyContent='space-between'; }
+  clone.style.cssText += ‘;width:’ + A4_W + ‘px;-webkit-text-size-adjust:100%;text-size-adjust:100%;’;
+  var ci = clone.querySelector(‘.cert-inner’);
+  if (ci) ci.style.padding = ‘48px 52px 40px’;
+  var cn = clone.querySelector(‘.cert-name-line’);
+  if (cn) cn.style.fontSize = ‘26px’;
+  var cc = clone.querySelector(‘.cert-course’);
+  if (cc) cc.style.fontSize = ‘20px’;
+  clone.querySelectorAll(‘.cert-course-list li’).forEach(function(el) { el.style.fontSize = ‘17px’; });
+  var cf = clone.querySelector(‘.cert-footer’);
+  if (cf) { cf.style.flexDirection=’row’; cf.style.alignItems=’flex-end’; cf.style.justifyContent=’space-between’; }
   container.appendChild(clone);
   document.body.appendChild(container);
 
   setTimeout(function() {
     var naturalH = clone.getBoundingClientRect().height;
     if (naturalH < A4_H) {
-      var spacer = clone.querySelector('.cert-spacer');
-      if (spacer) { var currentH = spacer.getBoundingClientRect().height || 48; spacer.style.height = (currentH + (A4_H - naturalH)) + 'px'; }
+      var spacer = clone.querySelector(‘.cert-spacer’);
+      if (spacer) { var h = spacer.getBoundingClientRect().height || 48; spacer.style.height = (h + (A4_H - naturalH)) + ‘px’; }
     }
     setTimeout(function() {
-      html2canvas(clone, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#49C5B1', logging: false, windowWidth: 1200 }).then(function(canvas) {
-        document.body.removeChild(container);
-        canvas.toBlob(function(blob) {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'TealProducts_SCP_Certificate_' + (window._certData ? window._certData.name.replace(/\s+/g,'_') : 'Certificate') + '.png';
-          a.click();
-          URL.revokeObjectURL(url);
-        }, 'image/png');
-      }).catch(function(err) {
-        document.body.removeChild(container);
-        console.error('Certificate image capture failed:', err);
-        alert('Could not save image. Please try again.');
-      });
+      html2canvas(clone, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: ‘#49C5B1’, logging: false, windowWidth: 1200 })
+        .then(function(canvas) {
+          document.body.removeChild(container);
+          canvas.toBlob(function(blob) { callback(blob); }, ‘image/png’);
+        })
+        .catch(function(err) {
+          document.body.removeChild(container);
+          console.error(‘Certificate capture failed:’, err);
+          callback(null);
+        });
     }, 150);
   }, 200);
 }
 
+function certFileName() {
+  return ‘TealProducts_SCP_Certificate_’ + (window._certData ? window._certData.name.replace(/\s+/g, ‘_’) : ‘Certificate’) + ‘.png’;
+}
+
+function triggerBlobDownload(blob, fileName) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement(‘a’);
+  a.href = url; a.download = fileName; a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ── Share on LinkedIn ── */
+function openLinkedInShare() {
+  const data = window._certData;
+  if (!data) { alert(‘Please generate your certificate first.’); return; }
+
+  const postText = [
+    ‘I’m delighted to share that I have successfully completed the Teal Products Smoke Control Panel (SCP) training programme!’,
+    ‘’,
+    ‘A huge thank you to the team at Teal Products for delivering such a comprehensive and professional training experience.’,
+    ‘’,
+    ‘#TealProducts #SmokePrevention #FireSafety #SmokeControl #Training #CPD’
+  ].join(‘\n’);
+
+  const btn = document.getElementById(‘btn-share-linkedin’);
+  const origHTML = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = ‘<svg class="btn-spin" viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor"><path d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8Z"/></svg> Preparing…’;
+
+  captureCertBlob(function(blob) {
+    btn.disabled = false;
+    btn.innerHTML = origHTML;
+
+    if (!blob) { alert(‘Could not generate certificate image. Please try again.’); return; }
+    window._certImageBlob = blob;
+
+    const file = new File([blob], certFileName(), { type: ‘image/png’ });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], text: postText })
+        .catch(function(err) {
+          if (err.name !== ‘AbortError’) { showLinkedInModal(postText); }
+        });
+    } else {
+      showLinkedInModal(postText);
+    }
+  });
+}
+
+function showLinkedInModal(postText) {
+  document.getElementById(‘linkedin-post-text’).value = postText;
+  document.getElementById(‘linkedin-modal’).classList.add(‘open’);
+}
+
+function closeLinkedInModal(e) {
+  if (e && e.target !== document.getElementById(‘linkedin-modal’)) return;
+  document.getElementById(‘linkedin-modal’).classList.remove(‘open’);
+}
+
+function copyPostText() {
+  const ta = document.getElementById(‘linkedin-post-text’);
+  navigator.clipboard.writeText(ta.value).then(function() {
+    const badge = document.getElementById(‘copy-confirm’);
+    badge.classList.add(‘visible’);
+    setTimeout(function() { badge.classList.remove(‘visible’); }, 2200);
+  }).catch(function() { ta.select(); document.execCommand(‘copy’); });
+}
+
+function downloadCertImage() {
+  if (window._certImageBlob) { triggerBlobDownload(window._certImageBlob, certFileName()); return; }
+  captureCertBlob(function(blob) {
+    if (!blob) { alert(‘Could not save image. Please try again.’); return; }
+    window._certImageBlob = blob;
+    triggerBlobDownload(blob, certFileName());
+  });
+}
+
 function openLinkedInPost() {
-  const text = document.getElementById('linkedin-post-text').value;
-  const url = 'https://www.linkedin.com/feed/?shareActive=true&text=' + encodeURIComponent(text);
-  window.open(url, '_blank', 'noopener');
+  const text = document.getElementById(‘linkedin-post-text’).value;
+  window.open(‘https://www.linkedin.com/feed/?shareActive=true&text=’ + encodeURIComponent(text), ‘_blank’, ‘noopener’);
 }
 
 </script>
